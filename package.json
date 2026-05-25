@@ -1,0 +1,27 @@
+{
+  "name": "campusos-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CampusOS AI — Unified National Smart Campus Operating System",
+  "scripts": {
+    "dev:api": "pnpm --filter @campusos/api dev",
+    "dev:web": "pnpm --filter @campusos/admin-web dev",
+    "dev:mobile": "pnpm --filter @campusos/mobile-app start",
+    "dev:ai": "pnpm --filter @campusos/ai-service dev",
+    "build:api": "pnpm --filter @campusos/api build",
+    "build:web": "pnpm --filter @campusos/admin-web build",
+    "db:migrate": "pnpm --filter @campusos/api prisma migrate dev",
+    "db:push": "pnpm --filter @campusos/api prisma db push",
+    "db:seed": "pnpm --filter @campusos/api prisma db seed",
+    "db:studio": "pnpm --filter @campusos/api prisma studio",
+    "db:reset": "pnpm --filter @campusos/api prisma migrate reset",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v && docker compose up -d",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "keywords": ["campus", "education", "ai", "smart-campus"],
+  "author": "CampusOS AI Team",
+  "license": "MIT"
+}

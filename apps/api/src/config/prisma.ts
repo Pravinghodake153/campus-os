@@ -1,0 +1,20 @@
+// ============================================================
+// CampusOS AI — Prisma Client Singleton
+// ============================================================
+
+import { PrismaClient } from '@prisma/client';
+import { config } from './index.js';
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: config.isDev ? ['query', 'warn', 'error'] : ['error'],
+  });
+
+if (config.isDev) {
+  globalForPrisma.prisma = prisma;
+}

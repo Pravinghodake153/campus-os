@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/* ============================================================
+   CampusOS AI — Design System
+   Clean, minimal, professional dark theme
+   See docs/ui-design-rules.md for full spec
+   ============================================================ */
+
+@theme inline {
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-inter);
+
+  /* Surface colors */
+  --color-surface: #161820;
+  --color-surface-hover: #1c1e2a;
+  --color-elevated: #1e2030;
+
+  /* Accent */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-muted: #3b82f620;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Text */
+  --color-text-primary: #f1f1f3;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+
+  /* Border */
+  --color-border-subtle: #ffffff0a;
+  --color-border-default: #ffffff14;
+}
+
+:root {
+  --bg-primary: #0f1117;
+  --bg-surface: #161820;
+  --bg-surface-hover: #1c1e2a;
+  --bg-elevated: #1e2030;
+  --text-primary: #f1f1f3;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border-subtle: #ffffff0a;
+  --border-default: #ffffff14;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --radius: 0.75rem;
+}
+
+/* ---- Base ---- */
+
+* {
+  border-color: var(--border-subtle);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* ---- Scrollbar ---- */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ffffff14;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ffffff28;
+}
+
+/* ---- Utility Classes ---- */
+
+.soft-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  transition: all 150ms ease;
+}
+
+.soft-surface:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-default);
+}
+
+.subtle-elevation {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.calm-status-success {
+  color: var(--color-success);
+  background: #22c55e10;
+}
+
+.calm-status-warning {
+  color: var(--color-warning);
+  background: #f59e0b10;
+}
+
+.calm-status-danger {
+  color: var(--color-danger);
+  background: #ef444410;
+}
+
+/* ---- Animations (subtle only) ---- */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 300ms ease forwards;
+}

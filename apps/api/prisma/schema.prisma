@@ -1,0 +1,619 @@
+// ============================================================
+// CampusOS AI — Prisma Schema
+// PostgreSQL database schema for the unified campus platform
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  CAMPUS_ADMIN
+  HOD
+  FACULTY
+  STUDENT
+  PLACEMENT_OFFICER
+  HOSTEL_MANAGER
+  TRANSPORT_MANAGER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  PENDING
+  REJECTED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+  EXPIRED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum PlacementDriveStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  SELECTED
+  REJECTED
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+  AUDITORIUM
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum NotificationType {
+  ACADEMIC
+  ATTENDANCE
+  PLACEMENT
+  EVENT
+  GENERAL
+}
+
+enum StudentPlacementStatus {
+  NOT_ELIGIBLE
+  ELIGIBLE
+  APPLIED
+  PLACED
+}
+
+// ============================================================
+// Core Models
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  campusId     String?
+  branchId     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  campus        Campus?        @relation(fields: [campusId], references: [id])
+  branch        Branch?        @relation("UserBranch", fields: [branchId], references: [id])
+  student       Student?
+  faculty       Faculty?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  hodOfBranch   Branch?        @relation("BranchHOD")
+
+  @@index([email])
+  @@index([role])
+  @@index([campusId])
+  @@index([branchId])
+  @@map("users")
+}
+
+model Campus {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  state     String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  branches           Branch[]
+  users              User[]
+  students           Student[]
+  faculty            Faculty[]
+  subjects           Subject[]
+  rooms              Room[]
+  placements         Placement[]
+  events             Event[]
+  hostels            Hostel[]
+  transportRoutes    TransportRoute[]
+  attendanceSessions AttendanceSession[]
+  timetables         Timetable[]
+  marks              Mark[]
+  riskPredictions    RiskPrediction[]
+
+  @@map("campuses")
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  campusId  String
+  name      String
+  code      String
+  hodId     String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campus             Campus              @relation(fields: [campusId], references: [id])
+  hod                User?               @relation("BranchHOD", fields: [hodId], references: [id])
+  users              User[]              @relation("UserBranch")
+  students           Student[]
+  faculty            Faculty[]
+  subjects           Subject[]
+  attendanceSessions AttendanceSession[]
+  events             Event[]
+  timetables         Timetable[]
+  marks              Mark[]
+  riskPredictions    RiskPrediction[]
+
+  @@unique([campusId, code])
+  @@index([campusId])
+  @@map("branches")
+}
+
+// ============================================================
+// Student & Faculty Models
+// ============================================================
+
+model Student {
+  id                 String                 @id @default(uuid())
+  userId             String                 @unique
+  rollNumber         String                 @unique
+  campusId           String
+  branchId           String
+  semester           Int
+  section            String
+  cgpa               Float                  @default(0)
+  backlogs           Int                    @default(0)
+  registeredDeviceId String?
+  hostelId           String?
+  transportRouteId   String?
+  placementStatus    StudentPlacementStatus @default(NOT_ELIGIBLE)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  // Relations
+  user                  User                   @relation(fields: [userId], references: [id])
+  campus                Campus                 @relation(fields: [campusId], references: [id])
+  branch                Branch                 @relation(fields: [branchId], references: [id])
+  hostel                Hostel?                @relation(fields: [hostelId], references: [id])
+  transportRoute        TransportRoute?        @relation(fields: [transportRouteId], references: [id])
+  attendanceRecords     AttendanceRecord[]
+  marks                 Mark[]
+  riskPredictions       RiskPrediction[]
+  placementApplications PlacementApplication[]
+  eventRegistrations    EventRegistration[]
+  hostelComplaints      HostelComplaint[]
+
+  @@index([campusId])
+  @@index([branchId])
+  @@index([semester])
+  @@index([branchId, semester, section])
+  @@map("students")
+}
+
+model Faculty {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  employeeCode String   @unique
+  campusId     String
+  branchId     String
+  designation  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user               User                @relation(fields: [userId], references: [id])
+  campus             Campus              @relation(fields: [campusId], references: [id])
+  branch             Branch              @relation(fields: [branchId], references: [id])
+  subjects           Subject[]
+  attendanceSessions AttendanceSession[]
+  timetables         Timetable[]
+
+  @@index([campusId])
+  @@index([branchId])
+  @@map("faculty")
+}
+
+// ============================================================
+// Academics Models
+// ============================================================
+
+model Subject {
+  id          String  @id @default(uuid())
+  campusId    String
+  branchId    String
+  name        String
+  code        String
+  semester    Int
+  section     String
+  facultyId   String
+  weeklyHours Int
+  isLab       Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  campus             Campus              @relation(fields: [campusId], references: [id])
+  branch             Branch              @relation(fields: [branchId], references: [id])
+  faculty            Faculty             @relation(fields: [facultyId], references: [id])
+  attendanceSessions AttendanceSession[]
+  attendanceRecords  AttendanceRecord[]
+  marks              Mark[]
+  timetables         Timetable[]
+
+  @@unique([campusId, branchId, code, semester, section])
+  @@index([branchId, semester])
+  @@map("subjects")
+}
+
+model Mark {
+  id             String @id @default(uuid())
+  studentId      String
+  subjectId      String
+  internalMarks  Float
+  assignmentScore Float
+  examScore      Float  @default(0)
+  semester       Int
+  campusId       String
+  branchId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  campus  Campus  @relation(fields: [campusId], references: [id])
+  branch  Branch  @relation(fields: [branchId], references: [id])
+
+  @@unique([studentId, subjectId, semester])
+  @@index([studentId])
+  @@index([campusId, branchId])
+  @@map("marks")
+}
+
+// ============================================================
+// Attendance Models
+// ============================================================
+
+model AttendanceSession {
+  id           String        @id @default(uuid())
+  subjectId    String
+  facultyId    String
+  campusId     String
+  branchId     String
+  semester     Int
+  section      String
+  sessionToken String        @unique
+  bleToken     String?
+  startedAt    DateTime      @default(now())
+  expiresAt    DateTime
+  status       SessionStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  subject Subject            @relation(fields: [subjectId], references: [id])
+  faculty Faculty            @relation(fields: [facultyId], references: [id])
+  campus  Campus             @relation(fields: [campusId], references: [id])
+  branch  Branch             @relation(fields: [branchId], references: [id])
+  records AttendanceRecord[]
+
+  @@index([status])
+  @@index([campusId, branchId])
+  @@index([facultyId])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id                 String           @id @default(uuid())
+  sessionId          String
+  studentId          String
+  subjectId          String
+  status             AttendanceStatus @default(PENDING)
+  confidenceScore    Int              @default(0)
+  verificationMethod String           @default("SMART")
+  bleDetected        Boolean          @default(false)
+  locationVerified   Boolean          @default(false)
+  deviceVerified     Boolean          @default(false)
+  markedAt           DateTime         @default(now())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // Relations
+  session AttendanceSession @relation(fields: [sessionId], references: [id])
+  student Student           @relation(fields: [studentId], references: [id])
+  subject Subject           @relation(fields: [subjectId], references: [id])
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([status])
+  @@map("attendance_records")
+}
+
+// ============================================================
+// AI & Risk Models
+// ============================================================
+
+model RiskPrediction {
+  id              String    @id @default(uuid())
+  studentId       String
+  riskScore       Float
+  riskLevel       RiskLevel
+  reasons         Json      // string[]
+  recommendations Json      // string[]
+  campusId        String
+  branchId        String
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id])
+  campus  Campus  @relation(fields: [campusId], references: [id])
+  branch  Branch  @relation(fields: [branchId], references: [id])
+
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([campusId, branchId])
+  @@map("risk_predictions")
+}
+
+// ============================================================
+// Timetable & Rooms
+// ============================================================
+
+model Timetable {
+  id        String @id @default(uuid())
+  campusId  String
+  branchId  String
+  semester  Int
+  section   String
+  subjectId String
+  facultyId String
+  roomId    String
+  day       String
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campus  Campus  @relation(fields: [campusId], references: [id])
+  branch  Branch  @relation(fields: [branchId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  faculty Faculty @relation(fields: [facultyId], references: [id])
+  room    Room    @relation(fields: [roomId], references: [id])
+
+  @@index([campusId, branchId, semester, section])
+  @@index([facultyId])
+  @@index([roomId, day])
+  @@map("timetables")
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  campusId  String
+  name      String
+  type      RoomType @default(CLASSROOM)
+  capacity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campus     Campus      @relation(fields: [campusId], references: [id])
+  timetables Timetable[]
+
+  @@unique([campusId, name])
+  @@map("rooms")
+}
+
+// ============================================================
+// Placement Models
+// ============================================================
+
+model Placement {
+  id             String               @id @default(uuid())
+  campusId       String
+  companyName    String
+  role           String
+  packageLpa     Float
+  minCgpa        Float
+  requiredSkills Json                 // string[]
+  driveDate      DateTime
+  status         PlacementDriveStatus @default(UPCOMING)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  // Relations
+  campus       Campus                 @relation(fields: [campusId], references: [id])
+  applications PlacementApplication[]
+
+  @@index([campusId])
+  @@index([status])
+  @@map("placements")
+}
+
+model PlacementApplication {
+  id          String            @id @default(uuid())
+  placementId String
+  studentId   String
+  status      ApplicationStatus @default(APPLIED)
+  appliedAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  placement Placement @relation(fields: [placementId], references: [id])
+  student   Student   @relation(fields: [studentId], references: [id])
+
+  @@unique([placementId, studentId])
+  @@index([studentId])
+  @@map("placement_applications")
+}
+
+// ============================================================
+// Events & Clubs
+// ============================================================
+
+model Event {
+  id              String   @id @default(uuid())
+  campusId        String
+  branchId        String?
+  title           String
+  description     String
+  clubName        String?
+  date            DateTime
+  venue           String
+  maxParticipants Int?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  campus        Campus              @relation(fields: [campusId], references: [id])
+  branch        Branch?             @relation(fields: [branchId], references: [id])
+  registrations EventRegistration[]
+
+  @@index([campusId])
+  @@index([date])
+  @@map("events")
+}
+
+model EventRegistration {
+  id           String   @id @default(uuid())
+  eventId      String
+  studentId    String
+  registeredAt DateTime @default(now())
+
+  // Relations
+  event   Event   @relation(fields: [eventId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId])
+  @@map("event_registrations")
+}
+
+// ============================================================
+// Hostel Models
+// ============================================================
+
+model Hostel {
+  id           String   @id @default(uuid())
+  campusId     String
+  name         String
+  totalRooms   Int
+  occupiedRooms Int
+  wardenName   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  campus     Campus            @relation(fields: [campusId], references: [id])
+  students   Student[]
+  complaints HostelComplaint[]
+
+  @@unique([campusId, name])
+  @@map("hostels")
+}
+
+model HostelComplaint {
+  id          String          @id @default(uuid())
+  studentId   String
+  hostelId    String
+  title       String
+  description String
+  status      ComplaintStatus @default(OPEN)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id])
+  hostel  Hostel  @relation(fields: [hostelId], references: [id])
+
+  @@index([hostelId])
+  @@index([status])
+  @@map("hostel_complaints")
+}
+
+// ============================================================
+// Transport Models
+// ============================================================
+
+model TransportRoute {
+  id          String   @id @default(uuid())
+  campusId    String
+  routeName   String
+  busNumber   String
+  driverName  String
+  driverPhone String?
+  stops       Json     // string[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  campus   Campus    @relation(fields: [campusId], references: [id])
+  students Student[]
+
+  @@unique([campusId, busNumber])
+  @@map("transport_routes")
+}
+
+// ============================================================
+// Notifications & Audit
+// ============================================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(GENERAL)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
