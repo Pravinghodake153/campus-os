@@ -2,10 +2,9 @@ services:
   # 1. Node.js API Service
   - type: web
     name: campusos-api
-    env: node
-    rootDir: apps/api
-    buildCommand: pnpm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts && npm run start
+    runtime: node
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @campusos/api prisma:generate && pnpm --filter @campusos/api build
+    startCommand: pnpm db:push && pnpm db:seed && pnpm --filter @campusos/api start
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -17,7 +16,7 @@ services:
   # 2. Python AI Service
   - type: web
     name: campusos-ai-service
-    env: python
+    runtime: python
     rootDir: apps/ai-service
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
@@ -25,7 +24,17 @@ services:
       - key: PYTHON_VERSION
         value: 3.10.13
 
-# 3. PostgreSQL Database
+  # 3. Next.js Frontend Admin Web App
+  - type: web
+    name: campusos-admin-web
+    runtime: node
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @campusos/admin-web build
+    startCommand: pnpm --filter @campusos/admin-web start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://campusos-api.onrender.com # Change this to your deployed API service URL
+
+# 4. PostgreSQL Database
 databases:
   - name: campusos-db
     databaseName: campusos
