@@ -11,6 +11,17 @@ import { useRiskBatch, useRiskModelInfo, useRiskRetrain } from "@/hooks/use-ai";
 import { BrainCircuit, AlertTriangle, Activity, RefreshCw, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface RiskPrediction {
+  studentId: string;
+  studentName: string;
+  riskScore: number;
+  riskLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence?: number;
+  studentReasons?: string[];
+  recommendations?: string[];
+  globalFeatureImportance?: Record<string, number>;
+}
+
 export default function AIRiskDashboard() {
   const user = useAuthStore((s) => s.user);
   const { data: modelInfo, isLoading: modelLoading } = useRiskModelInfo();
@@ -104,7 +115,7 @@ export default function AIRiskDashboard() {
             <div>
               <p className="text-[var(--text-muted)] text-xs mb-1">Last Trained</p>
               <p className="text-[var(--text-primary)] font-medium">
-                {new Date((modelInfo as any).last_trained).toLocaleString()}
+                {new Date((modelInfo as { last_trained: string }).last_trained).toLocaleString()}
               </p>
             </div>
             <div>
@@ -132,7 +143,7 @@ export default function AIRiskDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
-                {riskData.map((risk: any) => (
+                {riskData.map((risk: RiskPrediction) => (
                   <React.Fragment key={risk.studentId}>
                     <tr className="hover:bg-[var(--bg-surface-hover)]/50 transition-colors">
                       <td className="px-6 py-4">
@@ -191,7 +202,7 @@ export default function AIRiskDashboard() {
                             <div>
                               <h4 className="text-[var(--text-primary)] font-medium mb-3 text-sm">Global Feature Importance</h4>
                               <div className="space-y-3">
-                                {Object.entries(risk.globalFeatureImportance || {}).slice(0, 5).map(([feature, weight]: any) => (
+                                {Object.entries(risk.globalFeatureImportance || {}).slice(0, 5).map(([feature, weight]: [string, number]) => (
                                   <div key={feature}>
                                     <div className="flex justify-between text-xs mb-1">
                                       <span className="text-[var(--text-secondary)]">{feature}</span>
