@@ -143,7 +143,7 @@ export default function StudentsPage() {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPage((p: number) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="flex items-center gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
@@ -151,7 +151,7 @@ export default function StudentsPage() {
                 </button>
                 <button
                   onClick={() =>
-                    setPage((p) => Math.min(pagination.totalPages, p + 1))
+                    setPage((p: number) => Math.min(pagination.totalPages, p + 1))
                   }
                   disabled={page === pagination.totalPages}
                   className="flex items-center gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"

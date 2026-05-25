@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,9 +23,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        <QueryProvider>{children}</QueryProvider>
+    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

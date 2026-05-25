@@ -51,6 +51,30 @@
   --radius: 0.75rem;
 }
 
+/* ---- Light Theme ---- */
+html.light {
+  --bg-primary: #f8f9fb;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f3f5;
+  --bg-elevated: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --border-subtle: #e5e7eb;
+  --border-default: #d1d5db;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --radius: 0.75rem;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 /* ---- Base ---- */
 
 * {

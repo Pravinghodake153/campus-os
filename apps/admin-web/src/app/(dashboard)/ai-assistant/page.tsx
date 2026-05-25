@@ -27,7 +27,7 @@ const SUGGESTIONS = [
 ];
 
 export default function AIAssistant() {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s: any) => s.user);
   const { mutate: sendQuery, isPending } = useAiAssistant();
   
   const [query, setQuery] = useState("");
@@ -54,7 +54,7 @@ export default function AIAssistant() {
 
     // Add user message
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev: Message[]) => [...prev, userMsg]);
     setQuery("");
 
     // Send to AI
@@ -68,10 +68,10 @@ export default function AIAssistant() {
           intent: data.intent,
           data: data.data
         };
-        setMessages(prev => [...prev, aiMsg]);
+        setMessages((prev: Message[]) => [...prev, aiMsg]);
       },
       onError: (err) => {
-        setMessages(prev => [...prev, {
+        setMessages((prev: Message[]) => [...prev, {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: "Sorry, I am currently offline or encountered an error. " + err.message
@@ -177,7 +177,7 @@ export default function AIAssistant() {
         
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {messages.map((msg) => (
+          {messages.map((msg: Message) => (
             <div key={msg.id} className={cn("flex max-w-[85%] gap-3", msg.role === "user" ? "ml-auto flex-row-reverse" : "")}>
               <div className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
