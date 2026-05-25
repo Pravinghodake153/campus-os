@@ -1,6 +1,7 @@
 {
   "name": "campusos-ai",
   "version": "1.0.0",
+  "packageManager": "pnpm@9.15.4",
   "private": true,
   "description": "CampusOS AI — Unified National Smart Campus Operating System",
   "scripts": {
