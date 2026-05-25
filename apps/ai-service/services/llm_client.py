@@ -10,8 +10,7 @@ class LLMManager:
             print("WARNING: No Gemini API keys found in configuration.")
             
         self.current_key_index = 0
-        # Mapped User's requested "2.5 flash" and "3.0 pro" to nearest valid API model endpoints
-        self.models = ["gemini-1.5-pro", "gemini-1.5-flash"]
+        self.models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
         self._configure_current_key()
         
     def _configure_current_key(self):
