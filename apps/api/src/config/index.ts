@@ -11,7 +11,9 @@ export const config = {
   isDev: process.env.NODE_ENV !== 'production',
 
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://campusos:campusos123@localhost:5432/campusos_dev',
+    url: process.env.NODE_ENV === 'production'
+      ? 'postgresql://campusos:campusos123@localhost:5432/campusos_dev?schema=public'
+      : (process.env.DATABASE_URL || 'postgresql://campusos:campusos123@localhost:5432/campusos_dev'),
   },
 
   jwt: {
@@ -24,10 +26,6 @@ export const config = {
   },
 
   cors: {
-    origins: [
-      'http://localhost:3000', // Admin Web App
-      'http://localhost:8081', // Expo
-      'http://localhost:19006', // Expo Web
-    ],
+    origins: true, // Allow all origins for MVP
   },
 } as const;

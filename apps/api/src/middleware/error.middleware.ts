@@ -86,7 +86,7 @@ export function errorMiddleware(
   // Generic server error
   res.status(500).json({
     success: false,
-    message: config.isDev ? err.message : 'Internal server error',
+    message: err.message || 'Internal server error',
     timestamp: new Date().toISOString(),
   });
 }

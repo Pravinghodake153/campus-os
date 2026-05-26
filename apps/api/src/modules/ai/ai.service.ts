@@ -152,7 +152,7 @@ export async function buildAssistantContext(userId: string, role: string, campus
       include: {
         marks: true,
         attendance: true,
-        riskPrediction: true
+        riskPredictions: true
       }
     });
     context.student = student;
@@ -163,12 +163,12 @@ export async function buildAssistantContext(userId: string, role: string, campus
         ...(branchId && { branchId }),
         ...(campusId && { campusId })
       },
-      include: { riskPrediction: true, user: true }
+      include: { riskPredictions: true, user: true }
     });
     
     // Aggregate risk
-    const highRisk = context.students.filter((s: any) => s.riskPrediction?.riskLevel === 'HIGH').length;
-    const medRisk = context.students.filter((s: any) => s.riskPrediction?.riskLevel === 'MEDIUM').length;
+    const highRisk = context.students.filter((s: any) => s.riskPredictions?.[0]?.riskLevel === 'HIGH').length;
+    const medRisk = context.students.filter((s: any) => s.riskPredictions?.[0]?.riskLevel === 'MEDIUM').length;
     context.risk_data = {
       highRiskCount: highRisk,
       mediumRiskCount: medRisk,

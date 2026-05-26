@@ -4,19 +4,17 @@
 // ============================================================
 
 import { prisma } from '../../config/prisma.js';
-import { Prisma } from '@prisma/client';
-
 interface AccessFilter {
   campusId?: string;
   branchId?: string;
 }
 
 export async function getDashboardMetrics(filter: AccessFilter) {
-  const where: Prisma.StudentWhereInput = {};
+  const where: { campusId?: string; branchId?: string } = {};
   if (filter.campusId) where.campusId = filter.campusId;
   if (filter.branchId) where.branchId = filter.branchId;
 
-  const facultyWhere: Prisma.FacultyWhereInput = {};
+  const facultyWhere: { campusId?: string; branchId?: string } = {};
   if (filter.campusId) facultyWhere.campusId = filter.campusId;
   if (filter.branchId) facultyWhere.branchId = filter.branchId;
 
@@ -121,21 +119,21 @@ export async function getDashboardMetrics(filter: AccessFilter) {
 
   // Calculate average attendance
   const totalRecords = attendanceRecords.length;
-  const presentRecords = attendanceRecords.filter(r => r.status === 'PRESENT').length;
+  const presentRecords = attendanceRecords.filter((r: { status: string }) => r.status === 'PRESENT').length;
   const averageAttendance = totalRecords > 0
     ? Math.round((presentRecords / totalRecords) * 100)
     : 0;
 
   // Calculate hostel occupancy
-  const totalHostelRooms = hostels.reduce((sum, h) => sum + h.totalRooms, 0);
-  const totalOccupied = hostels.reduce((sum, h) => sum + h.occupiedRooms, 0);
+  const totalHostelRooms = hostels.reduce((sum: number, h: { totalRooms: number; occupiedRooms: number }) => sum + h.totalRooms, 0);
+  const totalOccupied = hostels.reduce((sum: number, h: { totalRooms: number; occupiedRooms: number }) => sum + h.occupiedRooms, 0);
   const hostelOccupancy = totalHostelRooms > 0
     ? Math.round((totalOccupied / totalHostelRooms) * 100)
     : 0;
 
   // Branch-wise attendance breakdown
   const branchWiseAttendance = await Promise.all(
-    branches.map(async (branch) => {
+    branches.map(async (branch: { id: string; name: string; code: string; _count: { students: number } }) => {
       const branchRecords = await prisma.attendanceRecord.findMany({
         where: {
           session: {
@@ -147,7 +145,7 @@ export async function getDashboardMetrics(filter: AccessFilter) {
       });
 
       const branchTotal = branchRecords.length;
-      const branchPresent = branchRecords.filter(r => r.status === 'PRESENT').length;
+      const branchPresent = branchRecords.filter((r: { status: string }) => r.status === 'PRESENT').length;
 
       return {
         branchId: branch.id,

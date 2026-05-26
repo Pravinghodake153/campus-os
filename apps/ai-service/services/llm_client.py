@@ -10,7 +10,7 @@ class LLMManager:
             print("WARNING: No Gemini API keys found in configuration.")
             
         self.current_key_index = 0
-        self.models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
+        self.models = ["gemini-2.5-flash"]
         self._configure_current_key()
         
     def _configure_current_key(self):
@@ -82,6 +82,9 @@ class LLMManager:
                         if not has_more_keys or self.current_key_index == start_key_index:
                             print(f"[LLMManager] Exhausted all keys for model {model_name}.")
                             break # Break inner loop, try next model
+                    elif "404" in error_str or "not found" in error_str or "not supported" in error_str:
+                        print(f"[LLMManager] Model {model_name} not found or unsupported. Trying next model.")
+                        break # Break inner loop, try next model
                     else:
                         # If it's a different error (e.g. invalid prompt, safety filter), raise immediately
                         raise e
