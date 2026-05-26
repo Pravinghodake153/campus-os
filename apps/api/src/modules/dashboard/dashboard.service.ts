@@ -91,6 +91,7 @@ export async function getDashboardMetrics(filter: AccessFilter) {
       ...(filter.branchId && { where: { id: filter.branchId } }),
       select: {
         id: true,
+        campusId: true,
         name: true,
         code: true,
         _count: { select: { students: true } },
@@ -149,6 +150,7 @@ export async function getDashboardMetrics(filter: AccessFilter) {
 
       return {
         branchId: branch.id,
+        campusId: branch.campusId,
         branchName: branch.name,
         branchCode: branch.code,
         averageAttendance: branchTotal > 0

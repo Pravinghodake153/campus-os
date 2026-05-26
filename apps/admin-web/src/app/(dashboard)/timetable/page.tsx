@@ -5,9 +5,10 @@
 // Connected to Python ML Service Constraint-Satisfaction
 // ============================================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useTimetableGenerate, useTimetableSave } from "@/hooks/use-ai";
+import { useDashboard } from "@/hooks/use-dashboard";
 import { CalendarClock, Save, Wand2, Clock, MapPin, User, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,30 +18,44 @@ export default function TimetableOptimizer() {
   const [semester, setSemester] = useState(1);
   const [section, setSection] = useState("A");
   
+  const { data: dashboardData } = useDashboard();
+  const branches = dashboardData?.branchWiseAttendance || [];
+  
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(user?.branchId || "");
+  
+  // Auto-select first branch if none selected and branches load
+  useEffect(() => {
+    if (!selectedBranchId && branches.length > 0) {
+      setSelectedBranchId(branches[0].branchId);
+    }
+  }, [branches, selectedBranchId]);
+
+  const selectedCampusId = user?.campusId || branches.find(b => b.branchId === selectedBranchId)?.campusId || "";
+  
   const { mutate: generate, isPending: generating, data: response } = useTimetableGenerate();
   const { mutate: save, isPending: saving } = useTimetableSave();
 
   const handleGenerate = () => {
-    if (!user?.campusId || !user?.branchId) {
-      alert("Missing campus or branch configuration.");
+    if (!selectedCampusId || !selectedBranchId) {
+      alert("Missing campus or branch configuration. Please select a branch.");
       return;
     }
     
     generate({
-      campusId: user.campusId,
-      branchId: user.branchId,
+      campusId: selectedCampusId,
+      branchId: selectedBranchId,
       semester,
       section
     });
   };
 
   const handleSave = () => {
-    if (!(response as any)?.data?.timetable || !user?.campusId || !user?.branchId) return;
+    if (!(response as any)?.data?.timetable || !selectedCampusId || !selectedBranchId) return;
     
     save({
       timetable: (response as any).data.timetable,
-      campusId: user.campusId,
-      branchId: user.branchId,
+      campusId: selectedCampusId,
+      branchId: selectedBranchId,
       semester,
       section
     }, {
@@ -82,6 +97,20 @@ export default function TimetableOptimizer() {
 
       {/* Controls */}
       <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-wrap items-end gap-4">
+        {(!user?.branchId && branches.length > 0) && (
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">Branch</label>
+            <select 
+              value={selectedBranchId} 
+              onChange={(e) => setSelectedBranchId(e.target.value)}
+              className="w-40 bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            >
+              <option value="" disabled>Select Branch</option>
+              {branches.map(b => <option key={b.branchId} value={b.branchId}>{b.branchName}</option>)}
+            </select>
+          </div>
+        )}
+
         <div>
           <label className="block text-xs text-[var(--text-secondary)] mb-1">Semester</label>
           <select 

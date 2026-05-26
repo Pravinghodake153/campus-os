@@ -16,6 +16,7 @@ interface DashboardMetrics {
   activeEvents: number;
   branchWiseAttendance: {
     branchId: string;
+    campusId: string;
     branchName: string;
     branchCode: string;
     averageAttendance: number;

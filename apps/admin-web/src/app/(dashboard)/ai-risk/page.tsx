@@ -5,9 +5,10 @@
 // Connected to Python ML Service
 // ============================================================
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRiskBatch, useRiskModelInfo, useRiskRetrain } from "@/hooks/use-ai";
+import { useDashboard } from "@/hooks/use-dashboard";
 import { BrainCircuit, AlertTriangle, Activity, RefreshCw, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,18 +29,27 @@ export default function AIRiskDashboard() {
   const { mutate: runPrediction, isPending, data: riskResponse } = useRiskBatch();
   const { mutate: retrain, isPending: retrainPending } = useRiskRetrain();
   
+  const { data: dashboardData } = useDashboard();
+  const branches = dashboardData?.branchWiseAttendance || [];
+  
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(user?.branchId || "");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Auto-select first branch if none selected and branches load
+  useEffect(() => {
+    if (!selectedBranchId && branches.length > 0) {
+      setSelectedBranchId(branches[0].branchId);
+    }
+  }, [branches, selectedBranchId]);
 
   const riskData = riskResponse?.data || [];
   const isFallback = riskResponse?.fallback === true;
 
   const handleRun = () => {
-    if (user?.branchId) {
-      runPrediction(user.branchId);
+    if (selectedBranchId) {
+      runPrediction(selectedBranchId);
     } else {
-      alert("Please select a branch first (Admin feature). For demo, assume branch is set.");
-      // Fallback for demo if no branchId
-      runPrediction("b1d19859-9941-4775-812d-0e42ec165509");
+      alert("Please select a branch first (Admin feature).");
     }
   };
 
@@ -64,7 +74,18 @@ export default function AIRiskDashboard() {
             Machine Learning Risk Prediction using Random Forest.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {(!user?.branchId && branches.length > 0) && (
+            <select 
+              value={selectedBranchId} 
+              onChange={(e) => setSelectedBranchId(e.target.value)}
+              className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            >
+              <option value="" disabled>Select Branch</option>
+              {branches.map(b => <option key={b.branchId} value={b.branchId}>{b.branchName}</option>)}
+            </select>
+          )}
+
           {user?.role === "SUPER_ADMIN" && (
             <button
               onClick={handleRetrain}
@@ -72,16 +93,16 @@ export default function AIRiskDashboard() {
               className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--bg-surface-hover)] disabled:opacity-50 transition-colors"
             >
               <RefreshCw size={16} className={cn(retrainPending && "animate-spin")} />
-              Retrain Model
+              Retrain
             </button>
           )}
           <button
             onClick={handleRun}
-            disabled={isPending}
+            disabled={isPending || !selectedBranchId}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors font-medium shadow-lg shadow-blue-500/20"
           >
             <Activity size={18} />
-            {isPending ? "Running Model..." : "Run Predictions"}
+            {isPending ? "Running..." : "Run Predictions"}
           </button>
         </div>
       </div>
