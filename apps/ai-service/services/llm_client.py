@@ -21,6 +21,13 @@ class LLMManager:
         genai.configure(api_key=key)
         print(f"[LLMManager] Configured to use API Key index: {self.current_key_index}")
         
+    def add_api_key(self, key: str):
+        if key not in self.api_keys:
+            self.api_keys.append(key)
+            print(f"[LLMManager] Added new API Key. Total keys: {len(self.api_keys)}")
+            if len(self.api_keys) == 1:
+                self._configure_current_key()
+        
     def _rotate_key(self) -> bool:
         """Rotate to the next API key. Returns False if we've tried all keys."""
         if not self.api_keys:

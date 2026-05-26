@@ -173,3 +173,18 @@ export async function assistantQuery(req: Request, res: Response) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
+
+export const addApiKey = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.body;
+    if (!key) {
+      return res.status(400).json({ success: false, message: 'API key is required' });
+    }
+
+    const response = await aiClient.post('/assistant/settings/keys', { key });
+    res.json({ success: true, data: response.data });
+  } catch (error: any) {
+    console.error('Error adding API key:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to add API key' });
+  }
+};

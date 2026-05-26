@@ -58,4 +58,11 @@ router.post(
   aiController.assistantQuery
 );
 
+router.post(
+  '/assistant/settings/keys',
+  authMiddleware,
+  requireRole('SUPER_ADMIN'),
+  aiController.addApiKey
+);
+
 export default router;

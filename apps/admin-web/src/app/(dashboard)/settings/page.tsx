@@ -17,10 +17,32 @@ import {
   Info,
   ChevronRight,
   Check,
+  Bot,
+  Key
 } from "lucide-react";
+import { useState } from "react";
+import api from "@/lib/api";
 
 export default function SettingsPage() {
   const { theme, changeTheme, mounted, resolvedTheme } = useSettings();
+  const [newKey, setNewKey] = useState("");
+  const [isSubmittingKey, setIsSubmittingKey] = useState(false);
+  const [keyStatus, setKeyStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
+
+  const handleAddApiKey = async () => {
+    if (!newKey.trim()) return;
+    setIsSubmittingKey(true);
+    setKeyStatus(null);
+    try {
+      await api.post('/ai/assistant/settings/keys', { key: newKey.trim() });
+      setKeyStatus({ type: 'success', msg: 'API key added successfully to AI Service.' });
+      setNewKey("");
+    } catch (err: any) {
+      setKeyStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to add API key' });
+    } finally {
+      setIsSubmittingKey(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -190,6 +212,55 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* AI Configuration Section */}
+      <section className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-[var(--text-primary)]">AI Configuration</h2>
+            <p className="text-xs text-[var(--text-secondary)]">Manage API keys and Gemini models</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+              Add Gemini API Key
+            </label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Key className="h-4 w-4 text-[var(--text-muted)]" />
+                </div>
+                <input
+                  type="password"
+                  placeholder="AIzaSy..."
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] sm:text-sm"
+                />
+              </div>
+              <button
+                onClick={handleAddApiKey}
+                disabled={isSubmittingKey || !newKey.trim()}
+                className="px-4 py-2 bg-[var(--accent)] text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-opacity whitespace-nowrap"
+              >
+                {isSubmittingKey ? "Adding..." : "Add Key"}
+              </button>
+            </div>
+            {keyStatus && (
+              <p className={`mt-2 text-sm ${keyStatus.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                {keyStatus.msg}
+              </p>
+            )}
+            <p className="text-xs text-[var(--text-muted)] mt-3">
+              Keys added here will be applied dynamically to the AI Assistant for this session (MVP).
+            </p>
+          </div>
         </div>
       </section>
 
